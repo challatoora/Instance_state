@@ -20,14 +20,14 @@ fi
 
 echo "Current instance state: $STATE"
 
-if [ "$STATE" = "stopped" ]; then
-    echo "Starting instance..."
-    aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null
+if [ "$STATE" = "running" ]; then
+    echo "Stopping instance..."
+    aws ec2 stop-instances --instance-ids "$INSTANCE_ID" >/dev/null
 
-    aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+    aws ec2 wait instance-stopped --instance-ids "$INSTANCE_ID"
 
-elif [ "$STATE" = "running" ]; then
-    echo "Instance is already running."
+elif [ "$STATE" = "stopped" ]; then
+    echo "Instance is already stopped."
 
 else
     echo "Instance is in '$STATE' state. No action taken."
