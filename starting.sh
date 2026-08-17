@@ -13,10 +13,10 @@ STATE=$(aws ec2 describe-instances \
     --query 'Reservations[0].Instances[0].State.Name' \
     --output text)
 
-# if [ $? -ne 0 ] || [ "$STATE" = "None" ]; then
-#     echo "Invalid EC2 Instance ID: $INSTANCE_ID"
-#     exit 1
-# fi
+if [ $? -ne 0 ] || [ "$STATE" = "None" ]; then
+    echo "Invalid EC2 Instance ID: $INSTANCE_ID"
+    exit 1
+fi
 
 echo "Current instance state: $STATE"
 
