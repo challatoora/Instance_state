@@ -1,41 +1,96 @@
+# #!/bin/bash
+
+# INSTANCE_ID="$@"
+
+# if [ -z "$INSTANCE_ID" ]; then
+#     echo "Usage: $0 <instance-id>"
+#     exit 1
+# fi
+
+# # Check if instance ID exists and get current state
+# STATE=$(aws ec2 describe-instances \
+#     --instance-ids "$INSTANCE_ID" \
+#     --query 'Reservations[0].Instances[0].State.Name' \
+#     --output text 2>/dev/null)
+
+# if [ $? -ne 0 ] || [ "$STATE" = "None" ]; then
+#     echo "Invalid EC2 Instance ID: $INSTANCE_ID"
+#     exit 1
+# fi
+
+# echo "Current instance state: $STATE"
+
+# if [ "$STATE" = "stopped" ]; then
+#     echo "Starting instance..."
+#     aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null
+
+#     aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+
+# elif [ "$STATE" = "running" ]; then
+#     echo "Instance is already running."
+
+# else
+#     echo "Instance is in '$STATE' state. No action taken."
+# fi
+
+# FINAL_STATE=$(aws ec2 describe-instances \
+#     --instance-ids "$INSTANCE_ID" \
+#     --query 'Reservations[0].Instances[0].State.Name' \
+#     --output text)
+
+# echo "Final instance state: $FINAL_STATE"
+
+
+
 #!/bin/bash
 
-INSTANCE_ID="$@"
+AWS_REGION="us-east-1"
 
-if [ -z "$INSTANCE_ID" ]; then
-    echo "Usage: $0 <instance-id>"
-    exit 1
-fi
+for INSTANCE_ID in "$@"
+do
 
-# Check if instance ID exists and get current state
-STATE=$(aws ec2 describe-instances \
-    --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[0].Instances[0].State.Name' \
-    --output text 2>/dev/null)
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "Instance ID is missing"
+        continue
+    fi
 
-if [ $? -ne 0 ] || [ "$STATE" = "None" ]; then
-    echo "Invalid EC2 Instance ID: $INSTANCE_ID"
-    exit 1
-fi
+    STATE=$(aws ec2 describe-instances \
+        --region "$AWS_REGION" \
+        --instance-ids "$INSTANCE_ID" \
+        --query 'Reservations[0].Instances[0].State.Name' \
+        --output text 2>&1)
 
-echo "Current instance state: $STATE"
+    if [ $? -ne 0 ]; then
+        echo "Invalid EC2 Instance ID: $INSTANCE_ID"
+        continue
+    fi
 
-if [ "$STATE" = "stopped" ]; then
-    echo "Starting instance..."
-    aws ec2 start-instances --instance-ids "$INSTANCE_ID" >/dev/null
+    echo "Current instance state: $STATE"
 
-    aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+    if [ "$STATE" = "stopped" ]; then
+        echo "Starting instance: $INSTANCE_ID"
 
-elif [ "$STATE" = "running" ]; then
-    echo "Instance is already running."
+        aws ec2 start-instances \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID"
 
-else
-    echo "Instance is in '$STATE' state. No action taken."
-fi
+        aws ec2 wait instance-running \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID"
 
-FINAL_STATE=$(aws ec2 describe-instances \
-    --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[0].Instances[0].State.Name' \
-    --output text)
+    elif [ "$STATE" = "running" ]; then
+        echo "Instance is already running: $INSTANCE_ID"
 
-echo "Final instance state: $FINAL_STATE"
+    else
+        echo "Instance is in '$STATE' state. No action taken."
+    fi
+
+    FINAL_STATE=$(aws ec2 describe-instances \
+        --region "$AWS_REGION" \
+        --instance-ids "$INSTANCE_ID" \
+        --query 'Reservations[0].Instances[0].State.Name' \
+        --output text)
+
+    echo "Final instance state: $FINAL_STATE"
+
+done
