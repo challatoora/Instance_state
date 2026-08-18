@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INSTANCE_ID="$1"
+INSTANCE_ID="$@"
 
 if [ -z "$INSTANCE_ID" ]; then
     echo "Usage: $0 <instance-id>"
