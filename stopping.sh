@@ -92,5 +92,6 @@ do
         --output text)
 
     echo "Final instance state: $FINAL_STATE"
+    echo " hi "
 
 done
